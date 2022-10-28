@@ -1,0 +1,329 @@
+<!DOCTYPE html5>
+<html>
+  <head>
+    <title>GVT - EA2</title>
+    <style>
+      .center {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .title {
+        position: absolute;
+        font-size: 30px;
+        top: 20%;
+      }
+
+      .wrapper {
+        position: relative;
+        width: 1000;
+        height: 800;
+        margin: 2em;
+      }
+
+      #canvas2 {
+        margin-bottom: 50px;
+        position: relative; /* has to be position relative for left to work, or you could just do margin-left: -50px; too */
+        left: 30px;
+      }
+    </style>
+  </head>
+  <body class="center">
+    <div class="wrapper">
+      <canvas
+        id="canvas2"
+        width="1000"
+        height="300"
+      ></canvas>
+      <canvas
+        id="canvas"
+        width="1000"
+        height="600"
+        style="border: 1px solid black"
+      ></canvas>
+    </div>
+    <script>
+      // Get the WebGL context.
+      var canvas = document.getElementById("canvas");
+      var gl = canvas.getContext("experimental-webgl");
+
+      var canvas = document.getElementById("canvas2");
+      var gl2 = canvas.getContext("experimental-webgl");
+
+      var w = window.innerWidth - 100;
+      var h = window.innerHeight - 100;
+
+      //canvas.width = w;
+      //canvas.height = h;
+
+      //gl.viewport(0, 0, w, h);
+
+      var prog = init(gl);
+      var prog2 = init(gl2);
+
+      var vertices;
+
+      // status bar
+      vertices = new Float32Array([-1, -0.7, 1, -0.7]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.65, -0.7, -0.65, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.3, -0.7, -0.3, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.1, -0.7, -0.1, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.1, -0.7, 0.1, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.65, -0.7, 0.65, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.55, -0.7, 0.55, -1]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // LEVEL
+
+      // UPPER ROOF
+      vertices = new Float32Array([-1, 0.95, 1, 0.9]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // LEFT WALL
+      vertices = new Float32Array([-1, -0.4, -0.3, 0]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.3, 0.25, -0.3, 0.85]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.4, 0.27, -0.4, 0.85]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.3, 0.85, -0.4, 0.935]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.3, 0.85, -0.4, 0.85]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.4, 0.85, -0.5, 0.935]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-1, 0.4, -0.3, 0.25]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.3, 0, -0.1, 0.05]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // MIDDLE
+      vertices = new Float32Array([-0.1, 0.05, 0.1, 0.05]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.1, 0.05, 0.1, 0.75]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.1, 0.75, -0.1, 0.8]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.1, 0.8, -0.2, 0.93]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.1, 0.75, 0.5, 0.75]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // DOOR
+      vertices = new Float32Array([0.1, 0.05, 0.5, 0.05]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.3, 0.05, 0.3, 0.4]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.3, 0.4, 0.45, 0.4]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.45, 0.05, 0.45, 0.4]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.44, 0.05, 0.44, 0.4]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.3, 0.35, 0.44, 0.35]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // RIGHT WALL
+      vertices = new Float32Array([1, -0.45, 0.5, -0.1]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.5, -0.1, 0.5, 0.91]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // GUN
+      vertices = new Float32Array([-0.17, -0.7, -0.14, -0.55]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.17, -0.7, 0.14, -0.55]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.14, -0.55, 0.14, -0.55]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.13, -0.58, 0.13, -0.58]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.14, -0.61, 0.14, -0.61]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.15, -0.64, 0.15, -0.64]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.16, -0.67, 0.16, -0.67]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      vertices = new Float32Array([-0.18, -0.7, -0.18, -0.59]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.18, -0.59, -0.17, -0.53]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.17, -0.53, -0.15, -0.48]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.15, -0.48, -0.13, -0.45]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([-0.13, -0.45, -0.11, -0.44]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      vertices = new Float32Array([-0.11, -0.44, 0.11, -0.44]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      vertices = new Float32Array([0.18, -0.7, 0.18, -0.59]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.18, -0.59, 0.17, -0.53]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.17, -0.53, 0.15, -0.48]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.15, -0.48, 0.13, -0.45]);
+      draw(gl, prog, vertices, gl.LINES);
+      vertices = new Float32Array([0.13, -0.45, 0.11, -0.44]);
+      draw(gl, prog, vertices, gl.LINES);
+
+      // DOOM TITLE
+
+      // D
+      vertices = new Float32Array([
+        -0.55, -0.75, 
+
+        -0.55, 0.8,
+        -0.55, 0.8, 
+
+        -0.57, 0.84, 
+        -0.35, 0.84,
+
+        -0.33, 0.78,
+        -0.33, -0.3,
+        -0.32, -0.32,
+        -0.57, -0.83,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // hole
+      vertices = new Float32Array([
+      -0.47, -0.1, 
+      -0.47, 0.6, 
+      -0.4, 0.6,
+      -0.4, 0.05,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // O
+      vertices = new Float32Array([
+        -0.31, -0.3,
+        -0.31, 0.78,
+        -0.29, 0.84,
+        -0.1, 0.84,
+        -0.08, 0.78,
+        -0.08, -0.3,
+        -0.18, -0.55,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // hole
+      vertices = new Float32Array([
+      -0.23, 0.05, 
+      -0.23, 0.6, 
+      -0.16, 0.6,
+      -0.16, -0.1,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // O
+      vertices = new Float32Array([
+        0.06, -0.55,
+        -0.06, -0.3,
+        -0.06, 0.78,
+        -0.04, 0.84,
+        0.17, 0.84,
+        0.19, 0.78,
+        0.19, -0.3,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // hole
+      vertices = new Float32Array([
+      0.03, -0.1, 
+      0.03, 0.6, 
+      0.1, 0.6,
+      0.1, 0.05,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      // M
+      vertices = new Float32Array([
+        0.20, -0.32,
+        0.21, -0.3,
+        0.21, 0.78,
+        0.19, 0.84,
+        0.28, 0.84,
+        0.31, 0.63,
+        0.34, 0.84,
+        0.43, 0.84,
+        0.41, 0.78,
+        0.41, -0.75,
+        0.43, -0.83,
+        0.34, -0.6,
+        0.36, -0.6,
+        0.36, 0.1,
+        0.32, -0.2,
+        0.27, 0.22,
+        0.27, -0.42,
+        0.275, -0.49,
+      ]);
+      draw(gl2, prog2, vertices, gl2.LINE_LOOP);
+
+      function init(gl) {
+        // Pipeline setup.
+        gl.clearColor(1, 0, 1, 1);
+        // Backface culling.
+        gl.frontFace(gl.CCW);
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        //gl.cullFace(gl.FRONT);
+
+        // Compile vertex shader.
+        var vsSource =
+          "attribute vec2 pos;" +
+          "void main(){ gl_Position = vec4(pos, 0, 1);" +
+          "gl_PointSize = 10.0; }";
+        var vs = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vs, vsSource);
+        gl.compileShader(vs);
+
+        // Compile fragment shader.
+        fsSouce = "void main() { gl_FragColor = vec4(0,0,0,1); }";
+        var fs = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fs, fsSouce);
+        gl.compileShader(fs);
+
+        // Link shader together into a program.
+        var prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        gl.useProgram(prog);
+
+        return prog;
+      }
+
+      function draw(gl, prog, vertices, drawType) {
+        var vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+        // Bind vertex buffer to attribute variable
+        var posAttrib = gl.getAttribLocation(prog, "pos");
+        gl.vertexAttribPointer(posAttrib, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(posAttrib);
+
+        // Backface culling.
+        //gl.frontFace(gl.CW);
+        //gl.enable(gl.CULL_FACE);
+        //gl.cullFace(gl.BACK);
+        //gl.cullFace(gl.FRONT);
+
+        // Clear framebuffer and render primitives
+        //gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(drawType, 0, vertices.length / 2);
+      }
+    </script>
+  </body>
+</html>
