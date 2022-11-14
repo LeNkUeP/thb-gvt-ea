@@ -1,0 +1,601 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<title>GVT - EA4</title>
+		<style>
+			body {
+				margin: 0px;
+				padding: 0px;
+				background-color: #00D2FF;
+			}
+
+			.item1 { 
+				grid-area: header; 
+			}
+			.item2 { 
+				grid-area: kidney; 
+			}
+			.item3 { 
+				grid-area: kuen; 
+			}
+			.item4 { 
+				grid-area: own; 
+			}
+			.item5 { 
+				grid-area: text1; 
+			}
+			.item6 { 
+				grid-area: text2; 
+			}
+			.item7 { 
+				grid-area: text3; 
+			}
+			.item8 { 
+				grid-area: formel; 
+			}
+
+			.grid-container {
+				display: grid;
+				grid-template-areas:
+					'header header header'
+					'text1 text2 text3'
+					'kidney kuen own'
+					'x x formel';
+				gap: 10px;
+				padding: 5px;
+			}
+
+			.grid-container > div {
+				text-align: center;
+				padding: 20px 0;
+				font-size: 30px;
+			}
+
+			#textblock{
+				background-color: #ffffff;
+				border-radius: 15px;
+				margin: 0 auto;
+				font-family: calibri,'Font Awesome 5 Free';
+			}
+
+			#textblock2{
+				background-color: #ffffff;
+				border-radius: 15px;
+				margin: 0 auto;
+				font-family: calibri,'Font Awesome 5 Free';
+				font-size: 15px;
+			}
+
+			.center {
+        		display: flex;
+        		justify-content: center;
+        		align-items: center;
+				margin: 0 auto;
+				padding: 15px 25px;
+      		}
+		</style>
+	</head>
+	<body>
+		<div class="grid-container">
+			<div id="textblock" class="item1">
+				<div class="center"><b>Graphical Visualization Technologies - EA4</b></div>
+			</div>
+
+			<div id="textblock" class="item5">
+				<a class = "center" href="http://www.3d-meier.de/tut3/Seite42.html">Kidney</a>
+			</div>
+
+			<div id="textblock" class="item6">
+				<a class = "center" href="http://www.3d-meier.de/tut3/Seite55.html">Kuens Surface</a>
+			</div>
+
+			<div id="textblock" class="item7">
+				<div class = "center">Eigenes</div>
+			</div>
+
+			<div class="item2">
+				<div class="center" id="kidney">
+					<canvas id="canvas1" width="400" height="400"></canvas>
+				</div>
+			</div>
+
+			<div class="item3">
+				<div class="center" id="kuen">
+					<canvas id="canvas2" width="400" height="400"></canvas>
+				</div>
+			</div>
+			<div class="item4">
+				<div class="center" id="own">
+					<canvas id="canvas3" width="400" height="400"></canvas>
+				</div>
+			</div>
+			<div id="textblock2" class="item8">
+				<div class = "center">
+					Kidney subtrahiert von Kuens Surface und Parameter angepasst:<br> 
+					var h = 5 + u*u * Math.sin(v) * Math.sin(v);<br>
+					var x = (2 * (Math.cos(u) + u * Math.sin(u)) * Math.sin(v))/h-Math.cos(u) * (3 * Math.cos(v) - Math.cos(3*v));<br>
+					var z = (2 * (-u * Math.cos(u) + Math.sin(u)) * Math.sin(v))/h-Math.sin(u) * (3 * Math.cos(v) - Math.cos(3*v));<br>
+					var y = Math.log(Math.tan(v/2)) + 2 * Math.cos(v)/h-3 * Math.sin(v) - Math.sin(3*v);</div>
+			</div>
+		</div>
+		<script>
+			// Get the WebGL context.
+			var canvas = document.getElementById('canvas1');
+			var gl = canvas.getContext('experimental-webgl');
+
+			// Pipeline setup.
+			gl.clearColor(.95, .95, .95, 1);
+			// Backface culling.
+			gl.frontFace(gl.CCW);
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.BACK);
+            // Depth(Z)-Buffer.
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+			// Polygon offset of rastered Fragments.
+			gl.enable(gl.POLYGON_OFFSET_FILL);
+            gl.polygonOffset(1.0, 1.0);
+			
+			// Compile vertex shader. 
+			var vsSource = '' + 
+				'attribute vec3 pos;' + 
+				'attribute vec4 col;' + 
+				'varying vec4 color;' + 
+				'void main(){' + 'color = col;' + 
+				'gl_Position = vec4(pos*0.2, 1);' +
+				'}';
+			var vs = gl.createShader(gl.VERTEX_SHADER);
+			gl.shaderSource(vs, vsSource);
+			gl.compileShader(vs);
+
+			// Compile fragment shader.
+			fsSouce = 'precision mediump float;' + 
+				'varying vec4 color;' + 
+				'void main() {' + 
+				'gl_FragColor = color;' + 
+				'}';
+			var fs = gl.createShader(gl.FRAGMENT_SHADER);
+			gl.shaderSource(fs, fsSouce);
+			gl.compileShader(fs);
+
+			// Link shader together into a program.
+			var prog = gl.createProgram();
+			gl.attachShader(prog, vs);
+			gl.attachShader(prog, fs);
+			gl.bindAttribLocation(prog, 0, "pos");
+			gl.linkProgram(prog);
+			gl.useProgram(prog);
+
+			// Vertex data.
+			// Positions, Index data.
+			var vertices, indicesLines, indicesTris;
+			// Fill the data arrays.
+			createKidney();
+
+			// Setup position vertex buffer object.
+			var vboPos = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, vboPos);
+			gl.bufferData(gl.ARRAY_BUFFER,
+				vertices, gl.STATIC_DRAW);
+			// Bind vertex buffer to attribute variable.
+			var posAttrib = gl.getAttribLocation(prog, 'pos');
+			gl.vertexAttribPointer(posAttrib, 3, gl.FLOAT,
+				false, 0, 0);
+			gl.enableVertexAttribArray(posAttrib);
+
+			// Setup constant color.
+			var colAttrib = gl.getAttribLocation(prog, 'col');
+
+			// Setup lines index buffer object.
+			var iboLines = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesLines, gl.STATIC_DRAW);
+			iboLines.numberOfElements = indicesLines.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Setup tris index buffer object.
+			var iboTris = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesTris, gl.STATIC_DRAW);
+			iboTris.numberOfElements = indicesTris.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Clear framebuffer and render primitives.
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+			// Setup rendering tris.
+			gl.vertexAttrib4f(colAttrib, 1, 0, 1, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.drawElements(gl.TRIANGLES,
+				iboTris.numberOfElements, gl.UNSIGNED_SHORT, 0);
+			
+			// Setup rendering lines.
+			gl.vertexAttrib4f(colAttrib, 0, 1, 0, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.drawElements(gl.LINES,
+				iboLines.numberOfElements, gl.UNSIGNED_SHORT, 0);
+
+			// CANVAS 2
+			// Get the WebGL context.
+			var canvas = document.getElementById('canvas2');
+			var gl = canvas.getContext('experimental-webgl');
+
+			// Pipeline setup.
+			gl.clearColor(.95, .95, .95, 1);
+			// Backface culling.
+			gl.frontFace(gl.CCW);
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.BACK);
+            // Depth(Z)-Buffer.
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+			// Polygon offset of rastered Fragments.
+			gl.enable(gl.POLYGON_OFFSET_FILL);
+            gl.polygonOffset(1.0, 1.0);
+			
+			// Compile vertex shader. 
+			var vsSource = '' + 
+				'attribute vec3 pos;' + 
+				'attribute vec4 col;' + 
+				'varying vec4 color;' + 
+				'void main(){' + 'color = col;' + 
+				'gl_Position = vec4(pos*0.28, 1);' +
+				'}';
+			var vs = gl.createShader(gl.VERTEX_SHADER);
+			gl.shaderSource(vs, vsSource);
+			gl.compileShader(vs);
+
+			// Compile fragment shader.
+			fsSouce = 'precision mediump float;' + 
+				'varying vec4 color;' + 
+				'void main() {' + 
+				'gl_FragColor = color;' + 
+				'}';
+			var fs = gl.createShader(gl.FRAGMENT_SHADER);
+			gl.shaderSource(fs, fsSouce);
+			gl.compileShader(fs);
+
+			// Link shader together into a program.
+			var prog = gl.createProgram();
+			gl.attachShader(prog, vs);
+			gl.attachShader(prog, fs);
+			gl.bindAttribLocation(prog, 0, "pos");
+			gl.linkProgram(prog);
+			gl.useProgram(prog);
+
+			// Vertex data.
+			// Positions, Index data.
+			var vertices, indicesLines, indicesTris;
+			// Fill the data arrays.
+			createKuen();
+
+			// Setup position vertex buffer object.
+			var vboPos = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, vboPos);
+			gl.bufferData(gl.ARRAY_BUFFER,
+				vertices, gl.STATIC_DRAW);
+			// Bind vertex buffer to attribute variable.
+			var posAttrib = gl.getAttribLocation(prog, 'pos');
+			gl.vertexAttribPointer(posAttrib, 3, gl.FLOAT,
+				false, 0, 0);
+			gl.enableVertexAttribArray(posAttrib);
+
+			// Setup constant color.
+			var colAttrib = gl.getAttribLocation(prog, 'col');
+
+			// Setup lines index buffer object.
+			var iboLines = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesLines, gl.STATIC_DRAW);
+			iboLines.numberOfElements = indicesLines.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Setup tris index buffer object.
+			var iboTris = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesTris, gl.STATIC_DRAW);
+			iboTris.numberOfElements = indicesTris.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Clear framebuffer and render primitives.
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+			// Setup rendering tris.
+			gl.vertexAttrib4f(colAttrib, 1, 0, 0, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.drawElements(gl.TRIANGLES,
+				iboTris.numberOfElements, gl.UNSIGNED_SHORT, 0);
+			
+			// Setup rendering lines.
+			gl.vertexAttrib4f(colAttrib, 0, 0, 0, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.drawElements(gl.LINES,
+				iboLines.numberOfElements, gl.UNSIGNED_SHORT, 0);
+
+			// CANVAS 3
+			// Get the WebGL context.
+			var canvas = document.getElementById('canvas3');
+			var gl = canvas.getContext('experimental-webgl');
+
+			// Pipeline setup.
+			gl.clearColor(.95, .95, .95, 1);
+			// Backface culling.
+			gl.frontFace(gl.CCW);
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.BACK);
+            // Depth(Z)-Buffer.
+            gl.enable(gl.DEPTH_TEST);
+            gl.depthFunc(gl.LEQUAL);
+			// Polygon offset of rastered Fragments.
+			gl.enable(gl.POLYGON_OFFSET_FILL);
+            gl.polygonOffset(1.0, 1.0);
+			
+			// Compile vertex shader. 
+			var vsSource = '' + 
+				'attribute vec3 pos;' + 
+				'attribute vec4 col;' + 
+				'varying vec4 color;' + 
+				'void main(){' + 'color = col;' + 
+				'gl_Position = vec4(pos*0.1, 1);' +
+				'}';
+			var vs = gl.createShader(gl.VERTEX_SHADER);
+			gl.shaderSource(vs, vsSource);
+			gl.compileShader(vs);
+
+			// Compile fragment shader.
+			fsSouce = 'precision mediump float;' + 
+				'varying vec4 color;' + 
+				'void main() {' + 
+				'gl_FragColor = color;' + 
+				'}';
+			var fs = gl.createShader(gl.FRAGMENT_SHADER);
+			gl.shaderSource(fs, fsSouce);
+			gl.compileShader(fs);
+
+			// Link shader together into a program.
+			var prog = gl.createProgram();
+			gl.attachShader(prog, vs);
+			gl.attachShader(prog, fs);
+			gl.bindAttribLocation(prog, 0, "pos");
+			gl.linkProgram(prog);
+			gl.useProgram(prog);
+
+			// Vertex data.
+			// Positions, Index data.
+			var vertices, indicesLines, indicesTris;
+			// Fill the data arrays.
+			createOwnModel();
+
+			// Setup position vertex buffer object.
+			var vboPos = gl.createBuffer();
+			gl.bindBuffer(gl.ARRAY_BUFFER, vboPos);
+			gl.bufferData(gl.ARRAY_BUFFER,
+				vertices, gl.STATIC_DRAW);
+			// Bind vertex buffer to attribute variable.
+			var posAttrib = gl.getAttribLocation(prog, 'pos');
+			gl.vertexAttribPointer(posAttrib, 3, gl.FLOAT,
+				false, 0, 0);
+			gl.enableVertexAttribArray(posAttrib);
+
+			// Setup constant color.
+			var colAttrib = gl.getAttribLocation(prog, 'col');
+
+			// Setup lines index buffer object.
+			var iboLines = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesLines, gl.STATIC_DRAW);
+			iboLines.numberOfElements = indicesLines.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Setup tris index buffer object.
+			var iboTris = gl.createBuffer();
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
+				indicesTris, gl.STATIC_DRAW);
+			iboTris.numberOfElements = indicesTris.length;
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+			// Clear framebuffer and render primitives.
+			gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+			// Setup rendering tris.
+			gl.vertexAttrib4f(colAttrib, 0, 1, 1, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboTris);
+			gl.drawElements(gl.TRIANGLES,
+				iboTris.numberOfElements, gl.UNSIGNED_SHORT, 0);
+			
+			// Setup rendering lines.
+			gl.vertexAttrib4f(colAttrib, 0., 0.5, 0.1, 1);
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iboLines);
+			gl.drawElements(gl.LINES,
+				iboLines.numberOfElements, gl.UNSIGNED_SHORT, 0);
+
+			function createKidney() {
+				var n = 44;
+				var m = 44;
+				// Positions
+				vertices = new Float32Array(3 * (n + 1) * (m + 1));
+				// Index data
+				indicesLines = new Uint16Array(2 * 2 * n * m);
+				indicesTris  = new Uint16Array(3 * 2 * n * m);
+
+				minu = 0;
+				maxu = 2*Math.PI;
+
+				minv = -Math.PI/2;
+				maxv = Math.PI/2;
+				
+				var du = (maxu+minu)/n;
+				var dv = (minv-maxv)/m;
+
+				// Counter for entries in index array.
+				var iLines = 0;
+				var iTris = 0;
+
+				for (var i = 0, u = minu; i <= n; i++, u += du) {
+
+					for (var j = 0, v = minv; j <= m; j++, v += dv) {
+						var iVertex = i * (m + 1) + j;
+						var x = Math.cos(u) * (3 * Math.cos(v) - Math.cos(3*v));
+						var z = Math.sin(u) * (3 * Math.cos(v) - Math.cos(3*v));
+						var y = 3 * Math.sin(v) - Math.sin(3*v);
+
+						// Set vertex positions
+						vertices[iVertex * 3] = x;
+						vertices[iVertex * 3 + 1] = y;
+						vertices[iVertex * 3 + 2] = z;
+						// Set index
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - 1;
+							indicesLines[iLines++] = iVertex;
+						}
+
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - (m + 1);
+							indicesLines[iLines++] = iVertex;
+						}
+
+						// Set index.
+						// Two Triangles.
+						if(j>0 && i>0){
+							indicesTris[iTris++] = iVertex;
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1);
+							//							
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1) - 1;							
+							indicesTris[iTris++] = iVertex - (m+1);							
+						}
+					}
+				}
+			}
+
+			function createKuen() {
+				var n = 64;
+				var m = 66;
+				// Positions
+				vertices = new Float32Array(3 * (n + 1) * (m + 1));
+				// Index data
+				indicesLines = new Uint16Array(2 * 2 * n * m);
+				indicesTris  = new Uint16Array(3 * 2 * n * m);
+
+				minu = -2;
+				maxu = 16;
+
+				minv = -3;
+				maxv = 1;
+				
+				var du = (maxu+minu)/n;
+				var dv = (minv-maxv)/m;
+
+				// Counter for entries in index array.
+				var iLines = 0;
+				var iTris = 0;
+
+				for (var i = 0, u = minu; i <= n; i++, u += du) {
+
+					for (var j = 0, v = minv; j <= m; j++, v += dv) {
+						var iVertex = i * (m + 1) + j;
+						var h = 1 + u*u * Math.sin(v) * Math.sin(v);
+						var x = (2 * (Math.cos(u) + u * Math.sin(u)) * Math.sin(v))/h;
+						var z = (2 * (-u * Math.cos(u) + Math.sin(u)) * Math.sin(v))/h;
+						var y = Math.log(Math.tan(v/2)) + 2 * Math.cos(v)/h;
+
+						// Set vertex positions
+						vertices[iVertex * 3] = x;
+						vertices[iVertex * 3 + 1] = y;
+						vertices[iVertex * 3 + 2] = z;
+						// Set index
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - 1;
+							indicesLines[iLines++] = iVertex;
+						}
+
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - (m + 1);
+							indicesLines[iLines++] = iVertex;
+						}
+
+						// Set index.
+						// Two Triangles.
+						if(j>0 && i>0){
+							indicesTris[iTris++] = iVertex;
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1);
+							//							
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1) - 1;							
+							indicesTris[iTris++] = iVertex - (m+1);							
+						}
+					}
+				}
+			}
+
+			function createOwnModel() {
+				var n = 44;
+				var m = 44;
+				// Positions
+				vertices = new Float32Array(3 * (n + 1) * (m + 1));
+				// Index data
+				indicesLines = new Uint16Array(2 * 2 * n * m);
+				indicesTris  = new Uint16Array(3 * 2 * n * m);
+
+				minu = 0;
+				maxu = 2*Math.PI;
+
+				minv = 0;
+				maxv = Math.PI*2;
+				
+				var du = (maxu+minu)/n;
+				var dv = (minv-maxv)/m;
+
+				// Counter for entries in index array.
+				var iLines = 0;
+				var iTris = 0;
+
+				for (var i = 0, u = minu; i <= n; i++, u += du) {
+
+					for (var j = 0, v = minv; j <= m; j++, v += dv) {
+						var iVertex = i * (m + 1) + j;
+						var h = 5 + u*u * Math.sin(v) * Math.sin(v);
+						var x = (2 * (Math.cos(u) + u * Math.sin(u)) * Math.sin(v))/h-Math.cos(u) * (3 * Math.cos(v) - Math.cos(3*v));
+						var z = (2 * (-u * Math.cos(u) + Math.sin(u)) * Math.sin(v))/h-Math.sin(u) * (3 * Math.cos(v) - Math.cos(3*v));
+						var y = Math.log(Math.tan(v/2)) + 2 * Math.cos(v)/h-3 * Math.sin(v) - Math.sin(3*v);
+
+						// Set vertex positions
+						vertices[iVertex * 3] = x;
+						vertices[iVertex * 3 + 1] = y;
+						vertices[iVertex * 3 + 2] = z;
+						// Set index
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - 1;
+							indicesLines[iLines++] = iVertex;
+						}
+
+						if (j > 0 && i > 0) {
+							indicesLines[iLines++] = iVertex - (m + 1);
+							indicesLines[iLines++] = iVertex;
+						}
+
+						// Set index.
+						// Two Triangles.
+						if(j>0 && i>0){
+							indicesTris[iTris++] = iVertex;
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1);
+							//							
+							indicesTris[iTris++] = iVertex - 1;
+							indicesTris[iTris++] = iVertex - (m+1) - 1;							
+							indicesTris[iTris++] = iVertex - (m+1);							
+						}
+					}
+				}
+			}
+		</script>
+	</body>
+</html>
