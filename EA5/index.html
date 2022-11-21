@@ -1,0 +1,97 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<title>GVT - EA5</title>
+		<style>
+		  .center {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		  }
+	
+		  .title {
+			position: absolute;
+			font-size: 30px;
+			top: 20%;
+		  }
+	
+		  .slidecontainer {
+			margin: 2em;
+		  }
+	
+		  #textblock{
+					background-color: #ffffff;
+					border-radius: 15px;
+					margin: 0 auto;
+					font-family: calibri,'Font Awesome 5 Free';
+			font-size: 30px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+					margin: 0 auto;
+					padding: 15px 25px;
+		  }
+
+		  .center {
+        		display: flex;
+        		justify-content: center;
+        		align-items: center;
+				margin: 0 auto;
+				padding: 15px 25px;
+      		}
+		</style>
+
+		<script src="ext/gl-matrix.js"></script>
+		<script src="GVT_Src_vertexData_plane.js"></script>
+		<script src="GVT_Src_vertexData_torus.js"></script>
+		<script src="GVT_Src_vertexData_kugel.js"></script>
+		<script src="GVT_Src_vertexData_kidney.js"></script>
+		<script src="GVT_Src_vertexData_kuen.js"></script>
+		<script src="KAP_Src_tpl.js"></script>
+		<script type="x-shader/x-vertex" id="vertexshader">
+			attribute vec3 aPosition;
+			attribute vec3 aNormal;
+
+			uniform mat4 uPMatrix;
+			uniform mat4 uMVMatrix;
+
+			varying vec4 vColor;
+
+			void main(){
+				gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
+	
+				vColor = vec4(aNormal.x, aNormal.y, aNormal.z, 1.0);
+				vColor = (vColor + 1.0) / 2.0;
+			}
+		</script>
+		<script type="x-shader/x-fragment" id="fragmentshader">
+			precision mediump float;
+			varying vec4 vColor;
+
+			void main() {
+				gl_FragColor = vColor;
+			}
+		</script>
+	</head>
+	<body onload="app.start()">
+		<div id="textblock" class="item1">
+			<div class="center"><b>Graphical Visualization Technologies - EA5</b></div>
+		</div>
+		<canvas class="center" id="canvas" width="500" height="500"></canvas>
+		<div class="center" class="slidecontainer"> REKURSIONSTIEFE: 
+			<input type="range" id="depthInput" value="1" min="0" max="7" oninput="depthIndicator.value = depthInput.value">
+			<output id="depthIndicator">1</output>
+		</div>
+		<div class="center" id = "radius">Aktueller Radius Multiplikator = 1</div>
+		<div id="textblock2" class="item8">
+			<div class = "center">
+				Steuerung:<br> <br>
+				W,A,S,D und Pfeiltasten = Navigation um Modelle <br>
+				O = Orthogonal <br>
+				F = Frustum <br>
+				P = Perspective <br>
+				N, Shift+N = Radius Multiplikator der Rotation einstellen
+			</div>
+		</div>
+	</body>
+</html>
