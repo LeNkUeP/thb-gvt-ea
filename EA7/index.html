@@ -1,0 +1,98 @@
+<!DOCTYPE html5>
+<html>
+	<head>
+		<title>GVT - EA7</title>
+		<style>
+		  .title {
+			position: absolute;
+			font-size: 30px;
+			top: 20%;
+		  }
+	
+		  .slidecontainer {
+			margin: 2em;
+		  }
+	
+		  #textblock{
+			background-color: #ffffff;
+			border-radius: 15px;
+			margin: 0 auto;
+			font-family: calibri,'Font Awesome 5 Free';
+			font-size: 30px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			margin: 0 auto;
+			padding: 15px 25px;
+		  }
+
+		  .center {
+        		display: flex;
+        		justify-content: center;
+        		align-items: center;
+				margin: 0 auto;
+				padding: 15px 25px;
+      		}
+		</style>
+
+		<script src="ext/gl-matrix.js"></script>
+		<script src="GVT_Src_vertexData_plane.js"></script>
+		<script src="GVT_Src_vertexData_torus.js"></script>
+		<script src="GVT_Src_vertexData_kugel.js"></script>
+		<script src="GVT_Src_vertexData_kidney.js"></script>
+		<script src="GVT_Src_vertexData_kuen.js"></script>
+		<script src="KAP_Src_tpl.js"></script>
+		<script type="x-shader/x-vertex" id="vertexshader">
+			precision mediump float;
+			
+			attribute vec3 aPosition;
+			attribute vec3 aNormal;
+			 
+			uniform mat4 uPMatrix;
+			uniform mat4 uMVMatrix;
+			uniform mat3 uNMatrix;
+			uniform vec4 uColor;
+			
+			varying vec4 vColor;
+			
+			void main(){
+
+				gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);
+				
+				vec3 tNormal = uNMatrix * aNormal;
+			
+				vColor = uColor;
+			}
+		</script>
+		<script type="x-shader/x-fragment" id="fragmentshader">
+
+			precision mediump float;
+			varying vec4 vColor;
+
+			void main() {
+				vec4 newColor = vColor;
+
+				newColor = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);
+				
+				gl_FragColor = newColor;
+			}
+
+		</script>
+	</head>
+	<body onload="app.start()">
+		<div id="textblock" class="item1">
+			<div class="center"><b>Graphical Visualization Technologies - EA7</b></div>
+		</div>
+		<canvas class="center" id="canvas" width="500" height="500"></canvas>
+		<div id="textblock2">
+			<div class = "center">
+				Steuerung:<br> <br>
+				W,A,S,D und Pfeiltasten = Navigation um Modelle <br>
+				O = Orthogonal <br>
+				F = Frustum <br>
+				P = Perspective <br>
+				Z, Shift+Z = Zoom In and Out
+			</div>
+		</div>
+	</body>
+</html>
