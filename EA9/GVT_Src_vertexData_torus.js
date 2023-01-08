@@ -75,7 +75,7 @@ var torus = ( function() {
 					indicesTris[iTris++] = iVertex;
 					indicesTris[iTris++] = iVertex - 1;
 					indicesTris[iTris++] = iVertex - (m + 1);
-					//
+					
 					indicesTris[iTris++] = iVertex - 1;
 					indicesTris[iTris++] = iVertex - (m + 1) - 1;
 					indicesTris[iTris++] = iVertex - (m + 1);
